@@ -18,6 +18,12 @@
             class="p-button-danger"
             @click="deleteUser(slotProps.data.id)"
           />
+          <Button style="margin-left: 3px;"
+            icon="pi pi-pencil"
+            class="p-button-primary"
+            @click="editUser(slotProps.data)"
+          />
+
         </template>
       </Column>
     </DataTable>
@@ -47,7 +53,7 @@
 
 
         <div class="flex justify gap-2 ">
-            <Button type="reset" class="text-lg" label="Reset" severity="secondary" @click="visible = false"></Button>
+            <Button type="cancel" class="text-lg" label="CANCEL" severity="secondary" @click="visible = false"></Button>
             <Button type="button" class="text-lg" label="Save" @click="saveUser"></Button>
         </div>
     </Dialog>
@@ -77,6 +83,14 @@ const form=ref({
 });
 
 
+// for edit user
+const editUser = (user)=>{
+  form.value = {...user};    // Fill the form with the selected user's data
+  visible.value = true;      // Open the dialog
+};
+
+
+
 // Fetch users when component is mounted
 onMounted(() => {
     UserService.getUsers().then(response => {
@@ -88,16 +102,49 @@ onMounted(() => {
 
 // Save user data
 const saveUser = () => {
-  UserService.saveUser(form.value).then(response => {
-    
-    UserService.getUsers().then(response => {
-      users.value = response.data; //  user data reload
-      visible.value = false; 
+  if (form.value.id) {
+    // Update user
+    UserService.updateUser(form.value.id, form.value).then(response => {
+      UserService.getUsers().then(response => {
+        users.value = response.data; // Reload user data
+        visible.value = false;
+      });
+    }).catch(error => {
+      console.error('Error updating user:', error);
     });
-  }).catch(error => {
-    console.error('Error saving user:', error);
-  });
+  } else {
+    // Create new user
+    UserService.saveUser(form.value).then(response => {
+      UserService.getUsers().then(response => {
+        users.value = response.data; // Reload user data
+        visible.value = false;
+      });
+    }).catch(error => {
+      console.error('Error saving user:', error);
+    });
+  }
 };
+
+
+
+
+
+
+
+
+
+
+// const saveUser = () => {
+//   UserService.saveUser(form.value).then(response => {
+    
+//     UserService.getUsers().then(response => {
+//       users.value = response.data; //  user data reload
+//       visible.value = false; 
+//     });
+//   }).catch(error => {
+//     console.error('Error saving user:', error);
+//   });
+// };
 
 
 
@@ -126,3 +173,5 @@ const deleteUser = (id) => {
     margin-bottom: 1rem;
 }
 </style>
+
+
