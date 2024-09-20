@@ -1,11 +1,20 @@
 <template>
 <div class="card">
 
+  <!-- Toast component -->
+   <Toast />
+
     <div class="button-container">
         <Button @click="visible=true"><span class="pi pi-plus"></span>ADD USER</Button>
     </div>
 
-    <DataTable :value="users" tableStyle="min-width: 50rem">
+    <DataTable :value="users" tableStyle="min-width: 50rem"
+    paginator
+    :rows="5"
+    :totalRecords="users.length"
+    :rowsPerPageOptions="[5,10,20]"
+    
+    >
         <Column field="id" header="ID"></Column>
         <Column field="fullName" header="Full Name"></Column>
         <Column field="email" header="EMAIL"></Column>
@@ -29,7 +38,7 @@
     </DataTable>
 
     <!-- Dialog for editing/adding a user  -->
-    <Dialog v-model:visible="visible" modal header="ADD USER" :style="{ width: '35rem' }">
+    <Dialog v-model:visible="visible" @keyup.enter="saveUser" modal header="ADD USER" :style="{ width: '35rem' }">
         
         <div class="flex items-center gap-3 mb-4">
             <label for="username" class="font-semibold w-24 text-lg">Full Name :</label>
@@ -52,7 +61,7 @@
         </div>
 
 
-        <div class="flex justify gap-2 ">
+        <div class="flex justify-content-center gap-2 ">
             <Button type="cancel" class="text-lg" label="CANCEL" severity="secondary" @click="visible = false"></Button>
             <Button type="button" class="text-lg" label="Save" @click="saveUser"></Button>
         </div>
@@ -70,6 +79,14 @@ import {
 // import user Service 
 import UserService from '../services/UserService';
 
+
+// import useToast
+import {useToast} from 'primevue/usetoast';
+
+// Initialize toast service
+const toast = useToast();
+
+
 const users = ref([]);
 
 const visible = ref(false);
@@ -83,10 +100,10 @@ const form=ref({
 });
 
 
-// for edit user
+// Populate form for editing
 const editUser = (user)=>{
-  form.value = {...user};    // Fill the form with the selected user's data
-  visible.value = true;      // Open the dialog
+  form.value = {...user};   //   spread operator (...), Fill the form with the selected user's data
+  visible.value = true;      
 };
 
 
@@ -108,9 +125,12 @@ const saveUser = () => {
       UserService.getUsers().then(response => {
         users.value = response.data; // Reload user data
         visible.value = false;
+        toast.add({ severity: 'success', summary: 'Success', detail: 'User updated successfully', life: 3000 });
+
       });
     }).catch(error => {
       console.error('Error updating user:', error);
+      toast.add({ severity: 'error', summary: 'Error', detail: 'Error updating user', life: 3000 });
     });
   } else {
     // Create new user
@@ -118,33 +138,16 @@ const saveUser = () => {
       UserService.getUsers().then(response => {
         users.value = response.data; // Reload user data
         visible.value = false;
+        toast.add({ severity: 'success', summary: 'Success', detail: 'User saved successfully', life: 3000 });
       });
     }).catch(error => {
       console.error('Error saving user:', error);
+      toast.add({ severity: 'error', summary: 'Error', detail: 'Error saving user', life: 3000 });
     });
   }
 };
 
 
-
-
-
-
-
-
-
-
-// const saveUser = () => {
-//   UserService.saveUser(form.value).then(response => {
-    
-//     UserService.getUsers().then(response => {
-//       users.value = response.data; //  user data reload
-//       visible.value = false; 
-//     });
-//   }).catch(error => {
-//     console.error('Error saving user:', error);
-//   });
-// };
 
 
 
@@ -154,9 +157,11 @@ const deleteUser = (id) => {
     UserService.deleteUser(id).then(() => {
       UserService.getUsers().then(response => {
         users.value = response.data; // Reload user data
+        toast.add({ severity: 'success', summary: 'Success', detail: 'User deleted successfully', life: 3000 });
       });
     }).catch(error => {
       console.error('Error deleting user:', error);
+      toast.add({ severity: 'error', summary: 'Error', detail: 'Error deleting user', life: 3000 });
     });
   }
 };
