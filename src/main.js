@@ -14,7 +14,9 @@ import ToastService from 'primevue/toastservice';
 
 
 // confirm dialog box while deleting user
+import ConfirmDialog from 'primevue/confirmdialog';
 import ConfirmationService from 'primevue/confirmationservice';
+
 
 //import Paginator
 import Paginator from 'primevue/paginator'; 
@@ -28,7 +30,7 @@ import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Toast from 'primevue/toast';
-import ConfirmDialog from 'primevue/confirmdialog';
+
 
 
 // mount the components
@@ -51,7 +53,8 @@ app.component('Dialog',Dialog);
 app.component('Button',Button);
 app.component('InputText',InputText);
 app.component('Toast',Toast);
-app.component('ConfirmDailog', ConfirmDialog);
+app.component('ConfirmDialog',ConfirmDialog)
+
 
 // Register Paginator globally
 app.component('Paginator',Paginator);

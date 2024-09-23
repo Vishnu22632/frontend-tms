@@ -7,7 +7,9 @@ import { createRouter, createWebHistory } from "vue-router";
 // import UserView from "@/components/UserView.vue";
 // import TaskView from "@/components/TaskView.vue";
 
-const HomeView = () => import('@/components/HeaderView.vue');
+
+// for LazyLoading : change static import to dynamic
+const HomeView = () => import('@/components/HomeView.vue');
 const UserView = () => import('@/components/UserView.vue');
 const ProjectView = () => import('@/components/ProjectView.vue');
 const TaskView = () => import('@/components/TaskView.vue');

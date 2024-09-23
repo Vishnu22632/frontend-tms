@@ -1,64 +1,58 @@
 <template>
 <div class="card">
 
-  <!-- Toast component -->
-   <Toast />
+    <!-- Toast component -->
 
+    <Toast />
+
+    <ConfirmDialog></ConfirmDialog>
     <div class="button-container">
         <Button @click="visible=true"><span class="pi pi-plus"></span>ADD USER</Button>
     </div>
 
-    <DataTable :value="users" tableStyle="min-width: 50rem"
-    paginator
-    :rows="5"
-    :totalRecords="users.length"
-    :rowsPerPageOptions="[5,10,20]"
-    
-    >
+    <DataTable :value="users" tableStyle="min-width: 50rem" paginator :rows="5" :totalRecords="users.length" :rowsPerPageOptions="[5,10,20]">
         <Column field="id" header="ID"></Column>
         <Column field="fullName" header="Full Name"></Column>
         <Column field="email" header="EMAIL"></Column>
         <Column field="password" header="PASSWORD"></Column>
         <Column field="address" header="ADDRESS"></Column>
         <Column header="ACTION">
-        <template #body="slotProps">
-          <Button
-            icon="pi pi-trash"
-            class="p-button-danger"
-            @click="deleteUser(slotProps.data.id)"
-          />
-          <Button style="margin-left: 3px;"
-            icon="pi pi-pencil"
-            class="p-button-primary"
-            @click="editUser(slotProps.data)"
-          />
+            <template #body="slotProps">
+                <Button icon="pi pi-trash" class="p-button-danger" @click="deleteUser(slotProps.data.id)" />
+                <Button style="margin-left: 3px;" icon="pi pi-pencil" class="p-button-primary" @click="editUser(slotProps.data)" />
 
-        </template>
-      </Column>
+            </template>
+        </Column>
     </DataTable>
 
     <!-- Dialog for editing/adding a user  -->
     <Dialog v-model:visible="visible" @keyup.enter="saveUser" modal header="ADD USER" :style="{ width: '35rem' }">
-        
+
         <div class="flex items-center gap-3 mb-4">
             <label for="username" class="font-semibold w-24 text-lg">Full Name :</label>
-            <InputText id="username" v-model="form.fullName" class="flex-auto" autocomplete="off" />
-        </div>
+            <InputText id="username" v-model="form.fullName" class="flex-auto" autocomplete="off" /> </div>
+            <p v-if="validationErrors.fullName" class="error">{{ validationErrors.fullName }}</p>
+
         <div class="flex items-center gap-6 mb-4">
             <label for="email" class="font-semibold w-24 text-lg">Email :</label>
             <InputText id="email" v-model="form.email" class="flex-auto" autocomplete="off" />
         </div>
+        <span v-if="validationErrors.email" class="error">{{ validationErrors.email }}</span>
 
 
         <div class="flex items-center gap-4 mb-4">
             <label for="password" class="font-semibold w-24 text-lg">Password :</label>
             <InputText type="password" id="password" v-model="form.password" class="flex-auto" autocomplete="off" />
         </div>
+        <span v-if="validationErrors.password" class="error">{{ validationErrors.password }}</span>
+
 
         <div class="flex items-center gap-5 mb-4">
             <label for="address" class="font-semibold w-24 text-lg">Address :</label>
             <InputText id="address" v-model="form.address" class="flex-auto" autocomplete="off" />
         </div>
+        <span v-if="validationErrors.address" class="error">{{ validationErrors.address }}</span>
+
 
 
         <div class="flex justify-content-center gap-2 ">
@@ -79,34 +73,89 @@ import {
 // import user Service 
 import UserService from '../services/UserService';
 
-
 // import useToast
-import {useToast} from 'primevue/usetoast';
+import {
+    useToast
+} from 'primevue/usetoast';
 
 // Initialize toast service
 const toast = useToast();
 
+// import useConfim
+import {
+    useConfirm
+} from "primevue/useconfirm";
+const confirm = useConfirm();
 
 const users = ref([]);
 
 const visible = ref(false);
 
 // create a form object to store input data
-const form=ref({
+const form = ref({
     fullName: '',
     email: '',
     password: '',
     address: ''
 });
 
+// validationErrors object to store message for each field 
+const validationErrors = ref({
+    fullName: '',
+    email: '',
+    password: '',
+    address: ''
+});
 
-// Populate form for editing
-const editUser = (user)=>{
-  form.value = {...user};   //   spread operator (...), Fill the form with the selected user's data
-  visible.value = true;      
+// create a validation function 
+const validationForm = () => {
+    let isValid = true;
+
+    // Reset error messages
+    validationErrors.value = {
+        fullName: '',
+        email: '',
+        password: '',
+        address: ''
+    };
+
+    // Full Name validation
+    if (!form.value.fullName.trim()) {
+        validationErrors.value.fullName = 'Full Name is required';
+        isValid = false;
+    }
+
+    // Email validation
+    if (!form.value.email.trim()) {
+        validationErrors.value.email = 'Email is required';
+        isValid = false;
+    } else if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(form.value.email)) {
+        validationErrors.value.email = 'Invalid email format';
+        isValid = false;
+    }
+
+    // Password validation
+    if (!form.value.password.trim()) {
+        validationErrors.value.password = 'Password is required';
+        isValid = false;
+    }
+
+    // Address validation
+    if (!form.value.address.trim()) {
+        validationErrors.value.address = 'Address is required';
+        isValid = false;
+    }
+
+    return isValid;
 };
 
-
+// Populate form for editing
+const editUser = (user) => {
+    form.value = {
+        ...user
+    }; //   spread operator (...), Fill the form with the selected user's data
+    visible.value = true;
+};
 
 // Fetch users when component is mounted
 onMounted(() => {
@@ -118,56 +167,138 @@ onMounted(() => {
 });
 
 // Save user data
+
 const saveUser = () => {
-  if (form.value.id) {
-    // Update user
-    UserService.updateUser(form.value.id, form.value).then(response => {
-      UserService.getUsers().then(response => {
-        users.value = response.data; // Reload user data
-        visible.value = false;
-        toast.add({ severity: 'success', summary: 'Success', detail: 'User updated successfully', life: 3000 });
 
-      });
-    }).catch(error => {
-      console.error('Error updating user:', error);
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Error updating user', life: 3000 });
+    if (!validationForm()) {
+        // if form is invalidateTypeCache, don't proceed
+        toast.add({
+            severity: 'warn',
+            summary: 'Validation Failed',
+            detail: 'please fill alll the required fields',
+            life: 3000
+        });
+        return;
+    }
+
+    confirm.require({
+        message: 'Are you sure you want to proceed?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Save'
+        },
+        accept: () => {
+            if (form.value.id) {
+                // Update user
+                UserService.updateUser(form.value.id, form.value).then(response => {
+                    UserService.getUsers().then(response => {
+                        users.value = response.data; // Reload user data
+                        visible.value = false;
+                        toast.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'User updated successfully',
+                            life: 3000
+                        });
+
+                    });
+                }).catch(error => {
+                    console.error('Error updating user:', error);
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error updating user',
+                        life: 3000
+                    });
+                });
+            } else {
+                // Create new user
+                UserService.saveUser(form.value).then(response => {
+                    UserService.getUsers().then(response => {
+                        users.value = response.data; // Reload user data
+                        visible.value = false;
+                        toast.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'User saved successfully',
+                            life: 3000
+                        });
+                    });
+                }).catch(error => {
+                    console.error('Error saving user:', error);
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error saving user',
+                        life: 3000
+                    });
+                });
+            }
+        },
+        reject: () => {
+            toast.add({
+                severity: 'error',
+                summary: 'Rejected',
+                detail: 'You have rejected',
+                life: 3000
+            });
+        }
     });
-  } else {
-    // Create new user
-    UserService.saveUser(form.value).then(response => {
-      UserService.getUsers().then(response => {
-        users.value = response.data; // Reload user data
-        visible.value = false;
-        toast.add({ severity: 'success', summary: 'Success', detail: 'User saved successfully', life: 3000 });
-      });
-    }).catch(error => {
-      console.error('Error saving user:', error);
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Error saving user', life: 3000 });
-    });
-  }
 };
-
-
-
-
 
 // Delete user
+
 const deleteUser = (id) => {
-  if (confirm('Are you sure you want to delete this user?')) {
-    UserService.deleteUser(id).then(() => {
-      UserService.getUsers().then(response => {
-        users.value = response.data; // Reload user data
-        toast.add({ severity: 'success', summary: 'Success', detail: 'User deleted successfully', life: 3000 });
-      });
-    }).catch(error => {
-      console.error('Error deleting user:', error);
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Error deleting user', life: 3000 });
+    confirm.require({
+        message: 'Are you sure you want to proceed?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Delete',
+            severity: 'danger'
+        },
+        accept: () => {
+            UserService.deleteUser(id).then(() => {
+                UserService.getUsers().then(response => {
+                    users.value = response.data; // Reload user data
+                    toast.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'User deleted successfully',
+                        life: 3000
+                    });
+                });
+            }).catch(error => {
+                console.error('Error deleting user:', error);
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Error deleting user',
+                    life: 3000
+                });
+            });
+        },
+        reject: () => {
+            toast.add({
+                severity: 'error',
+                summary: 'Rejected',
+                detail: 'You have rejected',
+                life: 3000
+            });
+        }
     });
-  }
 };
-
-
-
 </script>
 
 <style scoped>
@@ -177,6 +308,13 @@ const deleteUser = (id) => {
     justify-content: flex-end;
     margin-bottom: 1rem;
 }
+
+
+.error {
+    color: red;
+    font-size: 0.875rem;
+    margin-top: -0.75rem;
+    margin-bottom: 0.75rem;
+    display: block;
+}
 </style>
-
-
