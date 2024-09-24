@@ -3,10 +3,18 @@ import axios from "axios";
 const tms_api_url = "http://localhost:9595/api/users";
 
 class UserService{
+   
     // Fetch all users
     getUsers(){
         return axios.get(tms_api_url);  
     }
+
+     // Fetch users with pagination
+     getUsers(page, rows) {
+        return axios.get(`${tms_api_url}?page=${page}&size=${rows}`);
+    }
+    
+
 
     // save a user
     saveUser(user){

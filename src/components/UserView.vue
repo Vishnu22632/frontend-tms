@@ -6,11 +6,13 @@
     <Toast />
 
     <ConfirmDialog></ConfirmDialog>
+
     <div class="button-container">
-        <Button @click="visible=true"><span class="pi pi-plus"></span>ADD USER</Button>
+        <Button @click="showAddUserDialog"><span class="pi pi-plus"></span>ADD USER</Button>
     </div>
 
-    <DataTable :value="users" tableStyle="min-width: 50rem" paginator :rows="5" :totalRecords="users.length" :rowsPerPageOptions="[5,10,20]">
+    <DataTable :value="users" tableStyle="min-width: 50rem" paginator :rows="5" :totalRecords="totalRecords" lazy @page="onPageChange">
+
         <Column field="id" header="ID"></Column>
         <Column field="fullName" header="Full Name"></Column>
         <Column field="email" header="EMAIL"></Column>
@@ -30,8 +32,9 @@
 
         <div class="flex items-center gap-3 mb-4">
             <label for="username" class="font-semibold w-24 text-lg">Full Name :</label>
-            <InputText id="username" v-model="form.fullName" class="flex-auto" autocomplete="off" /> </div>
-            <p v-if="validationErrors.fullName" class="error">{{ validationErrors.fullName }}</p>
+            <InputText id="username" v-model="form.fullName" class="flex-auto" autocomplete="off" />
+        </div>
+        <p v-if="validationErrors.fullName" class="error">{{ validationErrors.fullName }}</p>
 
         <div class="flex items-center gap-6 mb-4">
             <label for="email" class="font-semibold w-24 text-lg">Email :</label>
@@ -39,21 +42,17 @@
         </div>
         <span v-if="validationErrors.email" class="error">{{ validationErrors.email }}</span>
 
-
         <div class="flex items-center gap-4 mb-4">
             <label for="password" class="font-semibold w-24 text-lg">Password :</label>
             <InputText type="password" id="password" v-model="form.password" class="flex-auto" autocomplete="off" />
         </div>
         <span v-if="validationErrors.password" class="error">{{ validationErrors.password }}</span>
 
-
         <div class="flex items-center gap-5 mb-4">
             <label for="address" class="font-semibold w-24 text-lg">Address :</label>
             <InputText id="address" v-model="form.address" class="flex-auto" autocomplete="off" />
         </div>
         <span v-if="validationErrors.address" class="error">{{ validationErrors.address }}</span>
-
-
 
         <div class="flex justify-content-center gap-2 ">
             <Button type="cancel" class="text-lg" label="CANCEL" severity="secondary" @click="visible = false"></Button>
@@ -88,6 +87,8 @@ import {
 const confirm = useConfirm();
 
 const users = ref([]);
+const totalRecords = ref(0);
+const dialogHeader = ref('Add User'); // Dynamic header
 
 const visible = ref(false);
 
@@ -149,6 +150,42 @@ const validationForm = () => {
     return isValid;
 };
 
+const loadUsers = (page = 0, rows = 5) => {
+    UserService.getUsers(page, rows)
+        .then(response => {
+            users.value = response.data.content; // Users for the current page
+            totalRecords.value = response.data.totalElements; // Total records for paginator
+        })
+        .catch(error => {
+            console.error('Error fetching users: ', error);
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error fetching users',
+                life: 3000
+            });
+        });
+};
+
+onMounted(() => {
+    loadUsers();
+});
+
+// Handle page change event
+const onPageChange = (event) => {
+    loadUsers(event.page, event.rows);
+
+};
+
+// Show add user dialog
+const showAddUserDialog = () => {
+  form.value = { fullName: '', email: '', password: '', address: '' }; 
+  
+  // Reset form
+  dialogHeader.value = 'Add User';
+  visible.value = true;
+};
+
 // Populate form for editing
 const editUser = (user) => {
     form.value = {
@@ -156,15 +193,6 @@ const editUser = (user) => {
     }; //   spread operator (...), Fill the form with the selected user's data
     visible.value = true;
 };
-
-// Fetch users when component is mounted
-onMounted(() => {
-    UserService.getUsers().then(response => {
-        users.value = response.data; // Assign the fetched data
-    }).catch(error => {
-        console.error('Error fetching users : ', error);
-    })
-});
 
 // Save user data
 
@@ -196,17 +224,14 @@ const saveUser = () => {
         accept: () => {
             if (form.value.id) {
                 // Update user
-                UserService.updateUser(form.value.id, form.value).then(response => {
-                    UserService.getUsers().then(response => {
-                        users.value = response.data; // Reload user data
-                        visible.value = false;
-                        toast.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'User updated successfully',
-                            life: 3000
-                        });
-
+                UserService.updateUser(form.value.id, form.value).then(() => {
+                    loadUsers(); // Reload users
+                    visible.value = false;
+                    toast.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'User updated successfully',
+                        life: 3000
                     });
                 }).catch(error => {
                     console.error('Error updating user:', error);
@@ -219,17 +244,16 @@ const saveUser = () => {
                 });
             } else {
                 // Create new user
-                UserService.saveUser(form.value).then(response => {
-                    UserService.getUsers().then(response => {
-                        users.value = response.data; // Reload user data
-                        visible.value = false;
-                        toast.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'User saved successfully',
-                            life: 3000
-                        });
+                UserService.saveUser(form.value).then(() => {
+                    loadUsers(); // Reload user data
+                    visible.value = false;
+                    toast.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'User saved successfully',
+                        life: 3000
                     });
+
                 }).catch(error => {
                     console.error('Error saving user:', error);
                     toast.add({
@@ -270,15 +294,15 @@ const deleteUser = (id) => {
         },
         accept: () => {
             UserService.deleteUser(id).then(() => {
-                UserService.getUsers().then(response => {
-                    users.value = response.data; // Reload user data
-                    toast.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'User deleted successfully',
-                        life: 3000
-                    });
+
+                loadUsers(); // Reload user data
+                toast.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'User deleted successfully',
+                    life: 3000
                 });
+
             }).catch(error => {
                 console.error('Error deleting user:', error);
                 toast.add({
@@ -308,7 +332,6 @@ const deleteUser = (id) => {
     justify-content: flex-end;
     margin-bottom: 1rem;
 }
-
 
 .error {
     color: red;

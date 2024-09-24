@@ -1,3 +1,4 @@
+
 import { createRouter, createWebHistory } from "vue-router";
 
 
@@ -13,7 +14,7 @@ const HomeView = () => import('@/components/HomeView.vue');
 const UserView = () => import('@/components/UserView.vue');
 const ProjectView = () => import('@/components/ProjectView.vue');
 const TaskView = () => import('@/components/TaskView.vue');
-
+// const TestNav = () => import('@/components/TestNav.vue');
 const routes = [
     {
         path: '/',
@@ -35,6 +36,8 @@ const routes = [
         name: 'tasks',
         component: TaskView
     }
+    
+
 ];
 
 const router= createRouter({
@@ -43,3 +46,26 @@ const router= createRouter({
 });
 
 export default router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
