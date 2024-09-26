@@ -1,5 +1,5 @@
 <template>
-<div class="card">
+<div class="card" style="font-size: 1.2em;">
 
     <!-- Toast component -->
 
@@ -9,6 +9,11 @@
 
     <div class="button-container">
         <Button @click="showAddUserDialog"><span class="pi pi-plus"></span>ADD USER</Button>
+    </div>
+
+    <!-- Global filter input -->
+    <div class="filter-container">
+        <InputText v-model="filter" placeholder="Filter by Full Name" @input="onFilter" />
     </div>
 
     <DataTable :value="users" tableStyle="min-width: 50rem" paginator :rows="5" :totalRecords="totalRecords" lazy @page="onPageChange">
@@ -63,6 +68,8 @@
 </div>
 </template>
 
+    
+    
 <script setup>
 import {
     ref,
@@ -88,8 +95,12 @@ const confirm = useConfirm();
 
 const users = ref([]);
 const totalRecords = ref(0);
+
+
 const dialogHeader = ref('Add User'); // Dynamic header
 
+
+const filter = ref(''); // Add filter input model
 const visible = ref(false);
 
 // create a form object to store input data
@@ -151,7 +162,7 @@ const validationForm = () => {
 };
 
 const loadUsers = (page = 0, rows = 5) => {
-    UserService.getUsers(page, rows)
+    UserService.getUsers(page, rows,filter.value)
         .then(response => {
             users.value = response.data.content; // Users for the current page
             totalRecords.value = response.data.totalElements; // Total records for paginator
@@ -177,13 +188,23 @@ const onPageChange = (event) => {
 
 };
 
+// Handle filter input and reload users
+const onFilter = () => {
+    loadUsers(0, 5); // Reset to first page when applying a filter
+};
+
 // Show add user dialog
 const showAddUserDialog = () => {
-  form.value = { fullName: '', email: '', password: '', address: '' }; 
-  
-  // Reset form
-  dialogHeader.value = 'Add User';
-  visible.value = true;
+    form.value = {
+        fullName: '',
+        email: '',
+        password: '',
+        address: ''
+    };
+
+    // Reset form
+    dialogHeader.value = 'Add User';
+    visible.value = true;
 };
 
 // Populate form for editing
@@ -324,7 +345,8 @@ const deleteUser = (id) => {
     });
 };
 </script>
-
+    
+    
 <style scoped>
 .button-container {
     margin: 15px 25px;

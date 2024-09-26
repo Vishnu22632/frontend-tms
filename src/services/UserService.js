@@ -9,11 +9,10 @@ class UserService{
         return axios.get(tms_api_url);  
     }
 
-     // Fetch users with pagination
-     getUsers(page, rows) {
-        return axios.get(`${tms_api_url}?page=${page}&size=${rows}`);
+      // Fetch users with pagination and optional filtering
+      getUsers(page, rows, filter = '') {
+        return axios.get(`${tms_api_url}?page=${page}&size=${rows}&filter=${filter}`);
     }
-    
 
 
     // save a user
