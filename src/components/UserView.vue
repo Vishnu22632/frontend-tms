@@ -11,7 +11,18 @@
         <Button @click="showAddUserDialog"><span class="pi pi-plus"></span>ADD USER</Button>
     </div>
 
-    <DataTable :value="users" tableStyle="min-width: 50rem" paginator :rows="5" :totalRecords="totalRecords" lazy @page="onPageChange">
+    <DataTable :value="users" 
+    tableStyle="min-width: 50rem" 
+    paginator 
+    :rows="5" 
+    :totalRecords="totalRecords" 
+    lazy 
+    @page="onPageChange"
+    :rowsPerPageOptions="[5,10,20]"
+     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+        currentPageReportTemplate="{first} to {last} of {totalRecords}"
+    
+    >
 
         <Column field="id" header="ID"></Column>
         <Column>
