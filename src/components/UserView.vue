@@ -1,5 +1,5 @@
 <template>
-<div class="card" style="font-size: 1.2em;">
+<div class="card" style="font-size: 1.4em;">
 
     <!-- Toast component -->
 
@@ -11,18 +11,53 @@
         <Button @click="showAddUserDialog"><span class="pi pi-plus"></span>ADD USER</Button>
     </div>
 
-    <!-- Global filter input -->
-    <div class="filter-container">
-        <InputText v-model="filter" placeholder="Filter by Full Name" @input="onFilter" />
-    </div>
-
     <DataTable :value="users" tableStyle="min-width: 50rem" paginator :rows="5" :totalRecords="totalRecords" lazy @page="onPageChange">
 
         <Column field="id" header="ID"></Column>
-        <Column field="fullName" header="Full Name"></Column>
-        <Column field="email" header="EMAIL"></Column>
+        <Column>
+            <template #header>
+                <div style="text-align: center; font-weight: bolder;">
+                    Full Name:
+                    <div>
+                        <InputText v-model="fullNameFilter" placeholder="Filter by Full Name" @input="onFilter" />
+                    </div>
+                </div>
+            </template>
+            <template #body="slotProps">
+                {{ slotProps.data.fullName }}
+            </template>
+        </Column>
+
+        <Column>
+                <template #header>
+                    <div style="text-align: center; font-weight: bolder;">
+                        Email:
+                        <div>
+                            <InputText v-model="emailFilter" placeholder="Filter by Email" @input="onFilter" />
+                        </div>
+                    </div>
+                </template>
+                <template #body="slotProps">
+                    {{ slotProps.data.email }}
+                </template>
+            </Column>
+
+        <Column>
+                <template #header>
+                    <div style="text-align: center; font-weight: bolder;">
+                        Address:
+                        <div>
+                            <InputText v-model="addressFilter" placeholder="Filter by Address" @input="onFilter" />
+                        </div>
+                    </div>
+                </template>
+                <template #body="slotProps">
+                    {{ slotProps.data.address }}
+                </template>
+            </Column>
+
         <Column field="password" header="PASSWORD"></Column>
-        <Column field="address" header="ADDRESS"></Column>
+        
         <Column header="ACTION">
             <template #body="slotProps">
                 <Button icon="pi pi-trash" class="p-button-danger" @click="deleteUser(slotProps.data.id)" />
@@ -68,8 +103,6 @@
 </div>
 </template>
 
-    
-    
 <script setup>
 import {
     ref,
@@ -96,11 +129,13 @@ const confirm = useConfirm();
 const users = ref([]);
 const totalRecords = ref(0);
 
+const fullNameFilter = ref(''); // Filter for Full Name
+const emailFilter = ref(''); // Filter for Email
+const addressFilter = ref(''); // Filter for Address
 
 const dialogHeader = ref('Add User'); // Dynamic header
 
 
-const filter = ref(''); // Add filter input model
 const visible = ref(false);
 
 // create a form object to store input data
@@ -161,11 +196,13 @@ const validationForm = () => {
     return isValid;
 };
 
+// Load users with filters
 const loadUsers = (page = 0, rows = 5) => {
-    UserService.getUsers(page, rows,filter.value)
+    const combinedFilter = `${fullNameFilter.value || ''} ${emailFilter.value || ''} ${addressFilter.value || ''}`.trim();
+    UserService.getUsers(page, rows, combinedFilter)
         .then(response => {
-            users.value = response.data.content; // Users for the current page
-            totalRecords.value = response.data.totalElements; // Total records for paginator
+            users.value = response.data.content;
+            totalRecords.value = response.data.totalElements;
         })
         .catch(error => {
             console.error('Error fetching users: ', error);
@@ -177,7 +214,6 @@ const loadUsers = (page = 0, rows = 5) => {
             });
         });
 };
-
 onMounted(() => {
     loadUsers();
 });
@@ -345,8 +381,7 @@ const deleteUser = (id) => {
     });
 };
 </script>
-    
-    
+
 <style scoped>
 .button-container {
     margin: 15px 25px;
